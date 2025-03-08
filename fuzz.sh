@@ -27,6 +27,10 @@ for tool in "${REQUIRED_TOOLS[@]}"; do
     fi
 done
 
+# Update script from GitHub
+log "Checking for updates..."
+git pull origin main &>/dev/null && log "Script updated successfully." || log "No updates available or GitHub repo not configured."
+
 # Input domain or file
 read -p "Enter the target domain or subdomains list file: " INPUT
 [ -z "$INPUT" ] && { echo -e "${RED}[ERROR] Input cannot be empty.${RESET}"; exit 1; }
