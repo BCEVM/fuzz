@@ -28,8 +28,12 @@ for tool in "${REQUIRED_TOOLS[@]}"; do
 done
 
 # Update script from GitHub
-log "Checking for updates..."
-git pull origin main &>/dev/null && log "Script updated successfully." || log "No updates available or GitHub repo not configured."
+UPDATE_MSG=$(git pull origin main 2>/dev/null)
+if [[ $UPDATE_MSG == *"Already up to date."* ]]; then
+    echo -e "${GREEN}[INFO] Tools sudah versi terbaru.${RESET}"
+else
+    echo -e "${GREEN}[INFO] Tools berhasil diperbarui.${RESET}"
+fi
 
 # Input domain or file
 read -p "Enter the target domain or subdomains list file: " INPUT
@@ -49,31 +53,28 @@ FILTERED_URLS_FILE="filtered_urls.txt"
 NUCLEI_RESULTS="nuclei_results.txt"
 LOG_FILE="scan.log"
 
-# Logging function
-log() { echo -e "$(date +%Y-%m-%dT%H:%M:%S) [INFO] $1" | tee -a "$LOG_FILE"; }
-
 # Fetch URLs
 echo "$TARGETS" | xargs -P10 -I{} sh -c 'gau "{}" >> "$1"' _ "$GAU_FILE"
-log "Fetched URLs saved to $GAU_FILE"
+echo "Fetched URLs saved to $GAU_FILE" >> "$LOG_FILE"
 
 # Filter URLs with query parameters
 grep -E '\?[^=]+=.+$' "$GAU_FILE" | uro | sort -u > "$FILTERED_URLS_FILE"
-log "Filtered URLs saved to $FILTERED_URLS_FILE"
+echo "Filtered URLs saved to $FILTERED_URLS_FILE" >> "$LOG_FILE"
 
 # Check live URLs
 httpx-toolkit -silent -t 300 -rl 200 < "$FILTERED_URLS_FILE" > "${FILTERED_URLS_FILE}.tmp"
 mv "${FILTERED_URLS_FILE}.tmp" "$FILTERED_URLS_FILE"
-log "Live URLs checked and updated."
+echo "Live URLs checked and updated." >> "$LOG_FILE"
 
 # Run nuclei scan
 nuclei -dast -retries 2 -silent -o "$NUCLEI_RESULTS" < "$FILTERED_URLS_FILE"
-log "Nuclei scan completed. Results saved to $NUCLEI_RESULTS"
+echo "Nuclei scan completed. Results saved to $NUCLEI_RESULTS" >> "$LOG_FILE"
 
 # Check results
 if [ ! -s "$NUCLEI_RESULTS" ]; then
-    log "No vulnerabilities found."
+    echo "No vulnerabilities found." >> "$LOG_FILE"
 else
-    log "Vulnerabilities detected! Check $NUCLEI_RESULTS"
+    echo "Vulnerabilities detected! Check $NUCLEI_RESULTS" >> "$LOG_FILE"
 fi
 
 echo -e "${GREEN}[INFO] Scan completed. Check logs at $LOG_FILE${RESET}"
