@@ -1,0 +1,5 @@
+Mengumpulkan URL dari domain atau daftar subdomain yang diberikan pengguna menggunakan gau.
+Menyaring URL dengan parameter query menggunakan uro.
+Memeriksa apakah URL aktif menggunakan httpx-toolkit.
+Melakukan pemindaian keamanan dengan nuclei untuk menemukan potensi kerentanan.
+Menyimpan hasil scan ke dalam file.
